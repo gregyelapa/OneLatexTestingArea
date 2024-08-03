@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Microsoft Graph API Example</title>
+  <script src="https://alcdn.msauth.net/browser/2.0.0/js/msal-browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@microsoft/microsoft-graph-client/lib/graph-js-sdk.js"></script>
+</head>
+<body>
+  <button onclick="getPermissions()">Get Permissions</button>
+  <script>
+    const msalConfig = {
+      auth: {
+        clientId: 'YOUR_CLIENT_ID', // Ersetzen Sie dies durch Ihre Client-ID
+        authority: 'https://login.microsoftonline.com/common', // oder Ihre spezifische Autorität
+        redirectUri: 'http://localhost' // Ersetzen Sie dies durch Ihre Redirect-URI
+      }
+    };
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    async function signIn() {
+      try {
+        const loginResponse = await msalInstance.loginPopup({
+          scopes: ["User.Read", "Directory.Read.All"]
+        });
+        return loginResponse.accessToken;
+      } catch (error) {
+        console.error('Login error:', error);
+        throw new Error('Login failed');
+      }
+    }
+
+    async function getPermissions() {
+      try {
+        const token = await signIn();
+
+        const client = MicrosoftGraph.Client.init({
+          authProvider: (done) => {
+            done(null, token);
+          }
+        });
+
+        const permissions = await client.api('/oauth2PermissionGrants').get();
+        console.log(permissions);
+      } catch (error) {
+        console.error('API call error:', error);
+        alert('An error occurred while fetching permissions');
+      }
+    }
+  </script>
+</body>
+</html>
